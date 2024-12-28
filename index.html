@@ -171,6 +171,7 @@
         let operations = ['+', '-', '*', '/'];
         let usedQuestions = new Set();
         let correctAnswer;
+        let feedbacks = [];
 
         function generateUniqueQuestion() {
             let num1, num2, operation, question;
@@ -284,6 +285,11 @@
             doc.text(`Erros: ${incorrect}`, 10, 70);
             doc.text(`Nível: ${level}`, 10, 80);
 
+            doc.text("Feedbacks:", 10, 100);
+            feedbacks.forEach((feedback, index) => {
+                doc.text(`- ${feedback}`, 10, 110 + index * 10);
+            });
+
             doc.save("resultados.pdf");
         }
 
@@ -297,6 +303,7 @@
             } else {
                 feedbackMessage.innerText = 'Obrigado pelo seu feedback!';
                 feedbackMessage.style.color = 'green';
+                feedbacks.push(feedback);
                 document.getElementById('feedback-form').reset();
             }
         }
