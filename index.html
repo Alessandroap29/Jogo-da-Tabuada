@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Operações Matemáticas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('/mnt/data/175655753-professor-ensinando-as-crianças-na-aula-de-matemática.jpg');
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        header {
+            background-color: rgba(0, 102, 204, 0.8);
+            color: white;
+            padding: 1em 0;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .container, .form-container, .game-container, .concepts-container {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+        input, textarea {
+            width: 90%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        textarea {
+            resize: none;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .options {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .option {
+            background-color: #e7e7e7;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+        .option:hover {
+            background-color: #d4d4d4;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .concept h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Portal de Operações Matemáticas</h1>
+        <p>Pratique e avalie seu nível de aprendizado!</p>
+    </header>
+
+    <div class="concepts-container">
+        <h2>Conceitos Básicos das Operações Matemáticas</h2>
+        <div class="concept">
+            <h3>Adição</h3>
+            <p>A adição é a operação de somar dois ou mais números. Exemplo: 3 + 2 = 5.</p>
+        </div>
+        <div class="concept">
+            <h3>Subtração</h3>
+            <p>A subtração é a operação de retirar um número de outro. Exemplo: 5 - 2 = 3.</p>
+        </div>
+        <div class="concept">
+            <h3>Multiplicação</h3>
+            <p>A multiplicação é a operação de somar um número várias vezes. Exemplo: 3 x 2 = 6.</p>
+        </div>
+        <div class="concept">
+            <h3>Divisão</h3>
+            <p>A divisão é a operação de dividir um número em partes iguais. Exemplo: 6 ÷ 2 = 3.</p>
+        </div>
+    </div>
+
+    <div class="form-container" id="form-container">
+        <h2>Informações do Aluno</h2>
+        <form id="student-form" onsubmit="startGame(); return false;">
+            <label for="name">Nome:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="age">Idade:</label>
+            <input type="number" id="age" name="age" required>
+
+            <label for="grade">Série:</label>
+            <input type="text" id="grade" name="grade" required>
+
+            <div class="button-container">
+                <button type="submit">Iniciar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="game-container" id="game-container" style="display:none;">
+        <div class="question" id="game-question">Carregando...</div>
+        <div class="options" id="game-options"></div>
+        <div class="result" id="game-result"></div>
+        <div class="button-container">
+            <button onclick="startGame()">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Seu Desempenho</h2>
+        <p>Acertos: <span id="correct">0</span></p>
+        <p>Erros: <span id="incorrect">0</span></p>
+        <p>Nível: <span id="level">Iniciante</span></p>
+        <div class="button-container">
+            <button onclick="exportResults()">Exportar Resultados em PDF</button>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <h2>Deixe seu Feedback</h2>
+        <form id="feedback-form" onsubmit="submitFeedback(); return false;">
+            <label for="feedback">Seu Feedback:</label>
+            <textarea id="feedback" name="feedback" rows="5" required></textarea>
+            <div class="button-container">
+                <button type="submit">Enviar</button>
+            </div>
+        </form>
+        <div id="feedback-message"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script>
+        let operations = ['+', '-', '*', '/'];
+        let usedQuestions = new Set();
+        let correctAnswer;
+
+        function generateUniqueQuestion() {
+            let num1, num2, operation, question;
+
+            do {
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                operation = operations[Math.floor(Math.random() * operations.length)];
+
+                if (operation === '/') {
+                    num1 = num1 * num2; // Garantir divisões exatas
+                }
+
+                question = `${num1} ${operation} ${num2}`;
+            } while (usedQuestions.has(question));
+
+            usedQuestions.add(question);
+            return { num1, num2, operation, question };
+        }
+
+        function generateQuestion() {
+            const { num1, num2, operation, question } = generateUniqueQuestion();
+
+            correctAnswer = eval(question);
+            correctAnswer = Math.round(correctAnswer * 100) / 100; // Arredondar para evitar problemas de ponto flutuante
+
+            document.getElementById('game-question').innerText = `Quanto é ${num1} ${operation} ${num2}?`;
+            generateOptions(correctAnswer);
+        }
+
+        function generateOptions(correct) {
+            let optionsContainer = document.getElementById('game-options');
+            optionsContainer.innerHTML = '';
+
+            let correctPosition = Math.floor(Math.random() * 4);
+
+            for (let i = 0; i < 4; i++) {
+                let option = document.createElement('div');
+                option.className = 'option';
+                option.onclick = () => checkAnswer(option.innerText);
+
+                if (i === correctPosition) {
+                    option.innerText = correct;
+                } else {
+                    option.innerText = Math.floor(Math.random() * 100) + 1;
+                }
+
+                optionsContainer.appendChild(option);
+            }
+        }
+
+        function checkAnswer(selected) {
+            let resultContainer = document.getElementById('game-result');
+
+            if (Number(selected) === correctAnswer) {
+                resultContainer.innerText = 'Parabéns! Você acertou!';
+                resultContainer.style.color = 'green';
+
+                document.getElementById('correct').innerText = Number(document.getElementById('correct').innerText) + 1;
+            } else {
+                resultContainer.innerText = `Que pena! A resposta correta era ${correctAnswer}.`;
+                resultContainer.style.color = 'red';
+
+                document.getElementById('incorrect').innerText = Number(document.getElementById('incorrect').innerText) + 1;
+            }
+
+            updateLevel();
+            setTimeout(generateQuestion, 2000);
+        }
+
+        function updateLevel() {
+            const correct = Number(document.getElementById('correct').innerText);
+            const incorrect = Number(document.getElementById('incorrect').innerText);
+            const levelElement = document.getElementById('level');
+
+            if (correct >= 5) {
+                levelElement.innerText = 'Avançado';
+            } else if (correct >= 3) {
+                levelElement.innerText = 'Intermediário';
+            } else {
+                levelElement.innerText = 'Iniciante';
+            }
+        }
+
+        function startGame() {
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            document.getElementById('game-result').innerText = '';
+            generateQuestion();
+        }
+
+        async function exportResults() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const grade = document.getElementById('grade').value;
+            const correct = document.getElementById('correct').innerText;
+            const incorrect = document.getElementById('incorrect').innerText;
+            const level = document.getElementById('level').innerText;
+
+            doc.setFontSize(16);
+            doc.text("Resultados do Portal de Operações Matemáticas", 10, 10);
+
+            doc.setFontSize(12);
+            doc.text(`Nome: ${name}`, 10, 30);
+            doc.text(`Idade: ${age}`, 10, 40);
+            doc.text(`Série: ${grade}`, 10, 50);
+            doc.text(`Acertos: ${correct}`, 10, 60);
+            doc.text(`Erros: ${incorrect}`, 10, 70);
+            doc.text(`Nível: ${level}`, 10, 80);
+
+            doc.save("resultados.pdf");
+        }
+
+        function submitFeedback() {
+            const feedback = document.getElementById('feedback').value;
+            const feedbackMessage = document.getElementById('feedback-message');
+
+            if (feedback.trim() === '') {
+                feedbackMessage.innerText = 'Por favor, preencha o campo de feedback.';
+                feedbackMessage.style.color = 'red';
+            } else {
+                feedbackMessage.innerText = 'Obrigado pelo seu feedback!';
+                feedbackMessage.style.color = 'green';
+                document.getElementById('feedback-form').reset();
+            }
+        }
+
+        // Inicializa o formulário
+        document.getElementById('form-container').style.display = 'block';
+        document.getElementById('game-container').style.display = 'none';
+    </script>
+</body>
+</html>
